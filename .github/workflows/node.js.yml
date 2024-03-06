@@ -1,0 +1,67 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm test
+publish-gpr:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 16
+          registry-url: https://npm.pkg.github.com/
+      - run: npm ci
+      - run: npm publish
+        env:
+          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: ${{secrets.GITHUB_TOKEN}}
+
+    
+git clone https://github.com/osascarv/silver-lake-city.git
+cd silver-lake-city
+$ npm init
+  ...
+  package name: @osascarv/silver-lake-city
+  ...
+  test command: exit 0
+  ...
+
+  @osascarv:registry=https://npm.pkg.github.com
+  "publishConfig": {
+  "@osascarv:registry": "https://npm.pkg.github.com"
+}
+$ git add .github/workflows/release-package.yml
+# Also add the file you created or edited in the previous step.
+$ git add .npmrc or package.json
+$ git commit -m "workflow to publish package"
+$ git push
